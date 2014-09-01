@@ -1,0 +1,27 @@
+
+NDK & NDT & CDT install
+http://j796160836.pixnet.net/blog/post/31583827-%5Bandroid%5D-%E5%AE%89%E8%A3%9Dndk%E8%88%87%E4%BD%BF%E7%94%A8jni%E5%91%BC%E5%8F%AB%E7%B3%BB%E7%B5%B1%E5%BA%95%E5%B1%A4native%E7%9A%84c-
+
+NDK auto build
+http://mobilepearls.com/labs/ndk-builder-in-eclipse/
+
+Other
+https://code.google.com/p/awesomeguy/wiki/JNITutorial
+
+Android.mk
+http://www.kandroid.org/ndk/docs/ANDROID-MK.html
+
+多线程
+http://www.cnblogs.com/lknlfy/archive/2012/03/16/2400786.html
+
+C中调用JAVA的参数、方法
+http://blog.sina.com.cn/s/blog_a000da9d01012h3e.html
+
+GetStaticMethodID "([Ljava/lang/String;)V"
+http://journals.ecs.soton.ac.uk/java/tutorial/native1.1/implementing/method.html
+
+Java传对象给C，C传对象给Java
+http://blog.csdn.net/lg707415323/article/details/7832252
+
+jbyteArray to char *
+http://blog.sina.com.cn/s/blog_73a49381010103rj.html

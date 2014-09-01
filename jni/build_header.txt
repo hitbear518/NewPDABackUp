@@ -1,0 +1,12 @@
+
+cd /Users/viki/svn/mobile/PDA/Android/Development/PDA
+
+javah -d jni -classpath bin/classes com.zsxj.pda.wdt.WDTLogin
+
+javah -d jni -classpath bin/classes com.zsxj.pda.wdt.WDTQuery
+
+
+
+
+javah -d jni -classpath bin/classes com.zsxj.pda.ui.client.MainActivity
+
