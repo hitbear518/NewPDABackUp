@@ -50,8 +50,6 @@ import com.zsxj.pda.wdt.WDTQuery.QueryCallBack;
 public class ScanAndListActivity extends ActionBarActivity implements QueryCallBack {
 	
 	private ScanService mScanService;
-	private boolean mBound;
-	private BarcodeReceiver mBarcodeReceiver;
 	private IntentFilter mScanIntentFilter = new IntentFilter(ScanService.SCAN_OVER_ACTION);
 	
 	private TextView mPromptTv;
@@ -70,21 +68,6 @@ public class ScanAndListActivity extends ActionBarActivity implements QueryCallB
 	private MyListAdapter mAdapter;
 	
 	private CashSaleSpec[] mCashSaleSpecs;
-	
-	private ServiceConnection mConnection = new ServiceConnection() {
-		
-		@Override
-		public void onServiceDisconnected(ComponentName name) {
-			mBound = false;
-			mScanService = null;
-		}
-		
-		@Override
-		public void onServiceConnected(ComponentName name, IBinder service) {
-			LocalBinder  binder = (LocalBinder) service;
-			mScanService = binder.getService();
-		}
-	};
 	
 	@SuppressLint("HandlerLeak")
 	private Handler mHandler = new Handler() {
@@ -173,8 +156,8 @@ public class ScanAndListActivity extends ActionBarActivity implements QueryCallB
 		default:
 			break;
 		}
+		
 		mPromptTv.setOnClickListener(new OnClickListener() {
-			
 			@Override
 			public void onClick(View arg0) {
 //				mBarcode = "JY201408110001";
@@ -202,15 +185,13 @@ public class ScanAndListActivity extends ActionBarActivity implements QueryCallB
 		mPdId = getIntent().getIntExtra(Extras.PD_ID, -1);
 		mWhichSpec = getIntent().getIntExtra(Extras.WHICH_SPEC, -1);
 		
-		
-		mBarcodeReceiver = new BarcodeReceiver();
+		Intent intent = new Intent(this, ScanService.class);
+		bindService(intent, mConnection, BIND_AUTO_CREATE);
 	}
 	
 	@Override
 	protected void onResume() {
 		super.onResume();
-		Intent intent = new Intent(this, ScanService.class);
-		boolean b = bindService(intent, mConnection, BIND_AUTO_CREATE);
 		LocalBroadcastManager.getInstance(this).registerReceiver(mBarcodeReceiver, mScanIntentFilter);
 		tryQuery();
 	}
@@ -218,11 +199,13 @@ public class ScanAndListActivity extends ActionBarActivity implements QueryCallB
 	@Override
 	protected void onPause() {
 		super.onPause();
-		if (mBound) {
-			unbindService(mConnection);
-			mBound = false;
-		}
 		LocalBroadcastManager.getInstance(this).unregisterReceiver(mBarcodeReceiver);
+	}
+	
+	@Override
+	protected void onDestroy() {
+		unbindService(mConnection);
+		super.onDestroy();
 	}
 
 	@Override
@@ -234,32 +217,25 @@ public class ScanAndListActivity extends ActionBarActivity implements QueryCallB
 		default:
 			break;
 		}
-		
 		return super.onOptionsItemSelected(item);
 	}
 	
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
-		Log.d("Scan Process", "ScanAndListActivity, onKeyDown");
-		if (ScanService.KEY_F1 == keyCode) {
-			if (mScanService != null) {
-				mScanService.tryTriggerOn();	
-			}
+		if (ScanService.KEY_F1 == keyCode && event.getRepeatCount() == 0 && mScanService != null) {
+			mScanService.triggerOn();
 			return true;
-		} else if (KeyEvent.KEYCODE_BACK == keyCode) {
-			onBackPressed();
-		}
-		return false;
+		} 
+		return super.onKeyDown(keyCode, event);
 	}
 	
+	@Override
 	public boolean onKeyUp(int keyCode, KeyEvent event) {
-		if (ScanService.KEY_F1 == keyCode) {
-			if (mScanService != null) {
-				mScanService.triggerOff();
-			}
+		if (ScanService.KEY_F1 == keyCode && mScanService != null) {
+			mScanService.triggerOff();
 			return true;
 		}
-		return false;
+		return super.onKeyUp(keyCode, event);
 	}
 	
 	@Override
@@ -632,17 +608,27 @@ public class ScanAndListActivity extends ActionBarActivity implements QueryCallB
 		}
 	}
 	
+	private ServiceConnection mConnection = new ServiceConnection() {
+		@Override
+		public void onServiceDisconnected(ComponentName name) {
+			mScanService = null;
+		}
+		
+		@Override
+		public void onServiceConnected(ComponentName name, IBinder service) {
+			LocalBinder  binder = (LocalBinder) service;
+			mScanService = binder.getService();
+		}
+	};
 	
-	
-	private class BarcodeReceiver extends BroadcastReceiver {
-
+	private BroadcastReceiver mBarcodeReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
-				if (intent.getAction().equals(ScanService.SCAN_OVER_ACTION)) {
-					String barcode = intent.getStringExtra(ScanService.EXTRA_BARCODE);
-					mBarcode = barcode;
-					tryQuery();
-				}
+			if (intent.getAction().equals(ScanService.SCAN_OVER_ACTION)) {
+				String barcode = intent.getStringExtra(ScanService.EXTRA_BARCODE);
+				mBarcode = barcode;
+				tryQuery();
+			}
 		}
-	}
+	};
 }

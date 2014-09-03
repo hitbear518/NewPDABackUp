@@ -1,21 +1,21 @@
 package com.zsxj.pda.ui.client;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.support.v4.widget.SimpleCursorAdapter;
+import android.support.v7.app.ActionBarActivity;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
-import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 
 import com.zsxj.pda.R;
 import com.zsxj.pda.provider.AddressDatabase;
 import com.zsxj.pda.util.ConstParams.Extras;
 
-public class AddressSelectActivity extends Activity {
+public class AddressSelectActivity extends ActionBarActivity {
 
 	private TextView mProvinceTv;
 	private TextView mCityTv;
@@ -118,7 +118,7 @@ public class AddressSelectActivity extends Activity {
 			android.R.layout.simple_list_item_1, 
 			cursor, 
 			new String[] {colName}, 
-			new int[] {android.R.id.text1}, 
+			new int[] {android.R.id.text1},
 			0
 		);
 		mAddressList.setAdapter(adapter);

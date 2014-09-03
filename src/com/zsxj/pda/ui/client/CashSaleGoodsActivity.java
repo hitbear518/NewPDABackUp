@@ -2,14 +2,21 @@ package com.zsxj.pda.ui.client;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.database.Cursor;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Message;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.text.Editable;
@@ -27,6 +34,8 @@ import android.widget.TextView;
 
 import com.zsxj.pda.R;
 import com.zsxj.pda.provider.ProviderContract.CashSaleGoods;
+import com.zsxj.pda.service.ScanService;
+import com.zsxj.pda.service.ScanService.LocalBinder;
 import com.zsxj.pda.util.ConstParams.Extras;
 import com.zsxj.pda.util.ConstParams.HandlerCases;
 import com.zsxj.pda.util.ConstParams.ScanType;
@@ -51,8 +60,6 @@ public class CashSaleGoodsActivity extends ActionBarActivity implements QueryCal
 	private Button mStockCanOrderBtn;
 	private Button mOkBtn;
 	
-	private String mBarcode;
-	
 	private int mSpecId;
 	private String mSpecBarcode;
 	private String mGoodsNum;
@@ -68,10 +75,12 @@ public class CashSaleGoodsActivity extends ActionBarActivity implements QueryCal
 	private String mPrice3;
 	private String mStockCanOrder;
 	
-
+	private String mBarcode;
+	private ScanService mScanService = null;
+	private IntentFilter mScanIntentFilter = new IntentFilter(ScanService.SCAN_OVER_ACTION);
+	
 	@SuppressLint("HandlerLeak")
 	private Handler mHandler = new Handler() {
-
 		@Override
 		public void dispatchMessage(Message msg) {
 			mProgressLayout.setVisibility(View.GONE);
@@ -90,15 +99,6 @@ public class CashSaleGoodsActivity extends ActionBarActivity implements QueryCal
 				break;
 			case HandlerCases.QUERY_SUCCESS:
 				dealData();
-				break;
-			case HandlerCases.SCAN_RESULT:
-				Intent startScan = 
-					new Intent(getApplicationContext(), ScanAndListActivity.class);
-				startScan.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-				startScan.putExtra(Extras.BARCODE, mBarcode);
-				startScan.putExtra(Extras.SCAN_TYPE, ScanType.TYPE_CASH_SALE);
-				startActivity(startScan);
-				finish();
 				break;
 			default:
 				break;
@@ -181,7 +181,6 @@ public class CashSaleGoodsActivity extends ActionBarActivity implements QueryCal
 		String countStr = getIntent().getStringExtra(Extras.COUNT);
 		if (!TextUtils.isEmpty(countStr))
 			mCountEdit.setText(countStr);
-//		mCountEdit.setSelection(mCountEdit.getText().length());
 
 		mUnitPriceEdit = (EditText) findViewById(R.id.unit_price_edit);
 		double unitPrice = -1;
@@ -232,6 +231,9 @@ public class CashSaleGoodsActivity extends ActionBarActivity implements QueryCal
                 checkWriteEntry();
 			}
 		});
+		
+		Intent intent = new Intent(this, ScanService.class);
+		bindService(intent, mConnection, BIND_AUTO_CREATE);
 	}
 	
 	@Override
@@ -249,19 +251,38 @@ public class CashSaleGoodsActivity extends ActionBarActivity implements QueryCal
 	
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
-		if (KeyEvent.KEYCODE_F2 == keyCode) {
+		if (ScanService.KEY_F1 == keyCode && event.getRepeatCount() == 0 && mScanService != null) {
+			mScanService.triggerOn();
 			return true;
-		}
-		if (KeyEvent.KEYCODE_BACK == keyCode) {
-			onBackPressed();
-		}
+		} 
 		return super.onKeyDown(keyCode, event);
 	}
 	
+	@Override
 	public boolean onKeyUp(int keyCode, KeyEvent event) {
-		if (KeyEvent.KEYCODE_F2 == keyCode) {
+		if (ScanService.KEY_F1 == keyCode && mScanService != null) {
+			mScanService.triggerOff();
+			return true;
 		}
 		return super.onKeyUp(keyCode, event);
+	}
+	
+	@Override
+	protected void onResume() {
+		super.onResume();	
+		LocalBroadcastManager.getInstance(this).registerReceiver(mBarcodeReceiver, mScanIntentFilter);
+	}
+	
+	@Override
+	protected void onPause() {
+		super.onPause();
+		LocalBroadcastManager.getInstance(this).unregisterReceiver(mBarcodeReceiver);
+	}
+	
+	@Override
+	protected void onDestroy() {
+		unbindService(mConnection);
+		super.onDestroy();
 	}
 	
 	private void checkWriteEntry() {
@@ -482,4 +503,35 @@ public class CashSaleGoodsActivity extends ActionBarActivity implements QueryCal
 			break;
 		}
 	}
+	
+	private ServiceConnection mConnection = new ServiceConnection() {
+		@Override
+		public void onServiceDisconnected(ComponentName name) {
+			mScanService = null;
+		}
+		
+		@Override
+		public void onServiceConnected(ComponentName name, IBinder service) {
+			LocalBinder  binder = (LocalBinder) service;
+			mScanService = binder.getService();
+		}
+	};
+	
+	private BroadcastReceiver mBarcodeReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			if (intent.getAction().equals(ScanService.SCAN_OVER_ACTION)) {
+				String barcode = intent.getStringExtra(ScanService.EXTRA_BARCODE);
+				mBarcode = barcode;
+				
+				Intent startScan = 
+					new Intent(getApplicationContext(), ScanAndListActivity.class);
+				startScan.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+				startScan.putExtra(Extras.BARCODE, mBarcode);
+				startScan.putExtra(Extras.SCAN_TYPE, ScanType.TYPE_CASH_SALE);
+				startActivity(startScan);
+				finish();
+			}
+		}
+	};
 }

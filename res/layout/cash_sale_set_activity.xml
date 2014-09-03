@@ -1,4 +1,5 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:clipChildren="true"
@@ -137,42 +138,42 @@
                     android:visibility="gone" />
             </LinearLayout>
 
-            <GridLayout
+            <android.support.v7.widget.GridLayout
                 android:id="@+id/customer_info_layout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:columnCount="2"
-                android:visibility="gone" >
+                android:visibility="gone"
+                app:columnCount="2" >
 
                 <TextView
-                    android:layout_gravity="right"
+                    app:layout_gravity="right"
                     android:text="@string/customer_name" />
 
                 <EditText
                     android:id="@+id/customer_name_edit"
-                    android:layout_gravity="fill_horizontal"
+                    app:layout_gravity="fill_horizontal"
                     android:inputType="text" />
 
                 <TextView
-                    android:layout_gravity="right"
+                    app:layout_gravity="right"
                     android:text="@string/telephone" />
 
                 <EditText
                     android:id="@+id/tel_edit"
-                    android:layout_gravity="fill_horizontal"
+                    app:layout_gravity="fill_horizontal"
                     android:inputType="number" />
 
                 <TextView
-                    android:layout_gravity="right"
+                    app:layout_gravity="right"
                     android:text="@string/zip_code" />
 
                 <EditText
                     android:id="@+id/zip_code_edit"
-                    android:layout_gravity="fill_horizontal"
+                    app:layout_gravity="fill_horizontal"
                     android:inputType="number" />
 
                 <TextView
-                    android:layout_gravity="right|center_vertical"
+                    app:layout_gravity="right|center_vertical"
                     android:text="@string/to_district_address" />
 
                 <Button
@@ -182,23 +183,23 @@
                     android:textSize="12sp" />
 
                 <TextView
-                    android:layout_gravity="right|center_vertical"
+                    app:layout_gravity="right|center_vertical"
                     android:text="@string/street_address" />
 
                 <EditText
                     android:id="@+id/street_address_edit"
-                    android:layout_gravity="fill_horizontal"
+                    app:layout_gravity="fill_horizontal"
                     android:inputType="text" />
 
                 <TextView
-                    android:layout_gravity="right"
+                    app:layout_gravity="right"
                     android:text="@string/email" />
 
                 <EditText
                     android:id="@+id/email_edit"
-                    android:layout_gravity="fill_horizontal"
+                    app:layout_gravity="fill_horizontal"
                     android:inputType="textEmailAddress" />
-            </GridLayout>
+            </android.support.v7.widget.GridLayout>
 
             <Button
                 android:id="@+id/ok_btn"

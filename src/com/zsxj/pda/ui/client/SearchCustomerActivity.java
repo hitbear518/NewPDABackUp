@@ -1,12 +1,12 @@
 package com.zsxj.pda.ui.client;
 
 import android.annotation.SuppressLint;
-import android.app.ActionBar;
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarActivity;
 import android.text.TextUtils;
 import android.view.MenuItem;
 import android.view.View;
@@ -30,7 +30,7 @@ import com.zsxj.pda.wdt.WDTException;
 import com.zsxj.pda.wdt.WDTQuery;
 import com.zsxj.pda.wdt.WDTQuery.QueryCallBack;
 
-public class SearchCustomerActivity extends Activity implements QueryCallBack {
+public class SearchCustomerActivity extends ActionBarActivity implements QueryCallBack {
 	
 	private EditText mSearchTermEdit;
 	private Button mSearchBtn;
@@ -73,7 +73,7 @@ public class SearchCustomerActivity extends Activity implements QueryCallBack {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.search_customer_activity);
 		
-		ActionBar actionBar = getActionBar();
+		ActionBar actionBar = getSupportActionBar();
 		actionBar.setDisplayHomeAsUpEnabled(true);
 		actionBar.setTitle(R.string.cash_sale);
 		

@@ -9,6 +9,7 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.serialport.SerialPort;
 import android.support.v4.content.LocalBroadcastManager;
+import android.text.TextUtils;
 
 import com.zsxj.pda.scan.DeviceControl;
 
@@ -25,10 +26,10 @@ public class ScanService extends Service {
 	private boolean mDeviceOpened;
 	private SerialPort mSerialPort;
 	private int mFileDecriptor;
-	private boolean mSerialPortOpened;
+	private boolean mSerialPortOpened = false;
 	private ReadThread mReadThread;
-	private boolean mPowerOn;
-	private boolean mTriggerOn;
+	private boolean mPowerOn = false;
+	private boolean mTriggerOn = false;
 
 	@Override
 	public void onCreate() {
@@ -50,51 +51,22 @@ public class ScanService extends Service {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
 		mFileDecriptor = mSerialPort.getFd();
 		if (mFileDecriptor > 0) {
 			mSerialPortOpened = true;
-			
 		}
-		
 	}
 	
 	@Override
 	public IBinder onBind(Intent intent) {
-		if (mSerialPortOpened) {
-			mReadThread = new ReadThread();
-			mReadThread.start();
-		}
-		
-		// Power On
-		if (!mPowerOn) {
-			try {
-				mDeviceControl.PowerOnDevice();
-				mPowerOn = true;
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
+		powerOn();
 		return mBinder;
 	}
 	
 	@Override
 	public boolean onUnbind(Intent intent) {
-		if (mSerialPortOpened) {
-    		try {
-				mDeviceControl.TriggerOffDevice();
-				mTriggerOn = false;
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-    		
-    		try {
-				mDeviceControl.PowerOffDevice();
-				mPowerOn = false;
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-    		mReadThread.interrupt();
-    	}
+		powerOff();
 		return super.onUnbind(intent);
 	}
 	
@@ -114,7 +86,7 @@ public class ScanService extends Service {
 		super.onDestroy();
 	}
 	
-	public void tryTriggerOn() {
+	public void triggerOn() {
 		if (!mTriggerOn) {
 			try {
 				mDeviceControl.TriggerOnDevice();
@@ -136,9 +108,44 @@ public class ScanService extends Service {
 		}
 	}
 	
+	private void powerOn() {
+		if (mSerialPortOpened) {
+			mReadThread = new ReadThread();
+			mReadThread.start();
+		}
+		
+		// Power On
+		if (!mPowerOn) {
+			try {
+				mDeviceControl.PowerOnDevice();
+				mPowerOn = true;
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	private void powerOff() {
+		try {
+			mDeviceControl.TriggerOffDevice();
+			mTriggerOn = false;
+		} catch (IOException e) {
+			e.printStackTrace();
+		}	
+		
+		try {
+			mDeviceControl.PowerOffDevice();
+			mPowerOn = false;
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		mReadThread.interrupt();
+	}
+	
 	private void sendBackBarcode(String barcode) {
 		Intent localIntent = new Intent(SCAN_OVER_ACTION)
-			.putExtra(EXTRA_BARCODE, barcode.trim());
+			.putExtra(EXTRA_BARCODE, barcode);
 		LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
 	}
 	
@@ -149,6 +156,9 @@ public class ScanService extends Service {
     			try {
     				String barcode = mSerialPort.ReadSerialString(mFileDecriptor, 1024, 100);
     				if (barcode != null) {
+    					barcode = barcode.trim();
+    				}
+    				if (!TextUtils.isEmpty(barcode)) {
     					sendBackBarcode(barcode);
     					mTriggerOn = false;
     				}

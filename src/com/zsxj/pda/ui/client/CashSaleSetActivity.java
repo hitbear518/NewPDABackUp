@@ -1,8 +1,6 @@
 package com.zsxj.pda.ui.client;
 
 import android.annotation.SuppressLint;
-import android.app.ActionBar;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -11,6 +9,9 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarActivity;
+import android.support.v7.widget.GridLayout;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
@@ -23,15 +24,13 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
-import android.widget.LinearLayout;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
-import android.widget.GridLayout;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.Spinner;
 
 import com.zsxj.pda.R;
-import com.zsxj.pda.provider.ProviderContract.CashSaleGoods;
 import com.zsxj.pda.util.ConstParams.Extras;
 import com.zsxj.pda.util.ConstParams.HandlerCases;
 import com.zsxj.pda.util.ConstParams.PrefKeys;
@@ -45,7 +44,7 @@ import com.zsxj.pda.wdt.WDTQuery;
 import com.zsxj.pda.wdt.WDTQuery.QueryCallBack;
 import com.zsxj.pda.wdt.Warehouse;
 
-public class CashSaleSetActivity extends Activity implements QueryCallBack {
+public class CashSaleSetActivity extends ActionBarActivity implements QueryCallBack {
 	
 	private static final int REQUEST_CODE_CUSTOMER = 0;
 	private static final int REQUEST_CODE_ADDRESS = 1;
@@ -122,7 +121,7 @@ public class CashSaleSetActivity extends Activity implements QueryCallBack {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.cash_sale_set_activity);
 		
-		final ActionBar actionBar = getActionBar();
+		final ActionBar actionBar = getSupportActionBar();
 		actionBar.setTitle(R.string.cash_sale);
 		actionBar.setDisplayHomeAsUpEnabled(true);
 		
@@ -445,7 +444,5 @@ public class CashSaleSetActivity extends Activity implements QueryCallBack {
 		Globals.setModuleUseWarehouseId(-1);
 		Globals.setWhichPrice(-1);
 		Globals.setCustomer(null);
-		
-//		getContentResolver().delete(CashSaleGoods.CONTENT_URI, null, null);
 	}
 }

@@ -3,17 +3,16 @@ package com.zsxj.pda.ui.client;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
-import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -35,7 +34,7 @@ public class MainActivity extends ActionBarActivity {
 	
 	private static Activity instance;
 	
-	private static int[] modules = Globals.getModules(Globals.getSellerNick()); 
+	private int[] mModules;
 	
 	public static Activity getInstance() {
 		return instance;
@@ -46,16 +45,16 @@ public class MainActivity extends ActionBarActivity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		setContentView(R.layout.main_activity);
 		
 		final ActionBar actionBar = getSupportActionBar();
 		actionBar.setTitle(R.string.function_list);
 		actionBar.setDisplayHomeAsUpEnabled(false);
 		
 		TITLES = getResources().getStringArray(R.array.titles);
+		mModules = Globals.getModules(this, Globals.getSellerNick());
 		
 		instance = this;
-		setContentView(R.layout.main_activity);
-		
 		titlesLv = (ListView) findViewById(R.id.titles_lv);
 		titlesLv.setAdapter(new MyListAdapter(this));
 		int warehouseId = getIntent().getIntExtra(Extras.WAREHOUSE_ID, -1);
@@ -65,7 +64,7 @@ public class MainActivity extends ActionBarActivity {
 
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-				switch (modules[position]) {
+				switch (mModules[position]) {
 				case 0:
 					intent.setClass(getApplicationContext(), ScanAndListActivity.class);
 					intent.putExtra(Extras.SCAN_TYPE, ScanType.TYPE_FAST_PD);
@@ -101,32 +100,17 @@ public class MainActivity extends ActionBarActivity {
 	@Override
 	public void onBackPressed() {
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		LayoutInflater inflater = getLayoutInflater();
-		View view = inflater.inflate(R.layout.custom_alert_dialog_view, null);
-		TextView message = (TextView) view.findViewById(R.id.message);
-		message.setText(R.string.check_quit);
-		
-		builder.setView(view);
+		builder.setMessage(R.string.check_quit);
+		builder.setNegativeButton(android.R.string.cancel, null);
 		final AlertDialog dialog = builder.create();
-		
-		Button btn_positive = (Button) view.findViewById(R.id.btn_positive);
-		Button btn_negative = (Button) view.findViewById(R.id.btn_negative);
-		btn_positive.setOnClickListener(new OnClickListener() {
-			
+		dialog.setButton(DialogInterface.BUTTON_POSITIVE, getString(android.R.string.ok), 
+				new DialogInterface.OnClickListener() {
 			@Override
-			public void onClick(View v) {
+			public void onClick(DialogInterface dialog, int which) {
 				dialog.dismiss();
 				MainActivity.super.onBackPressed();
 			}
 		});
-		btn_negative.setOnClickListener(new OnClickListener() {
-			
-			@Override
-			public void onClick(View v) {
-				dialog.cancel();
-			}
-		});
-		
 		dialog.show();
 	}
 	
@@ -140,7 +124,7 @@ public class MainActivity extends ActionBarActivity {
 		
 		@Override
 		public int getCount() {
-			return modules.length;
+			return mModules.length;
 		}
 
 		@Override
@@ -162,10 +146,10 @@ public class MainActivity extends ActionBarActivity {
 			}
 			
 			TextView titleTv = (TextView) convertView.findViewById(R.id.item_tv);
-			if (99 == modules[position]) {
+			if (99 == mModules[position]) {
 				titleTv.setText(R.string.settings);
 			} else {
-				titleTv.setText(TITLES[modules[position]]);	
+				titleTv.setText(TITLES[mModules[position]]);	
 			}
 			return convertView;
 		}

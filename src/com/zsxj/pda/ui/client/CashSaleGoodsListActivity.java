@@ -3,16 +3,18 @@ package com.zsxj.pda.ui.client;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 
-import android.annotation.SuppressLint;
-import android.app.ActionBar;
-import android.app.ListActivity;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
+import android.os.IBinder;
+import android.support.v4.content.LocalBroadcastManager;
+import android.support.v7.app.ActionBarActivity;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.KeyEvent;
@@ -24,154 +26,118 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
-import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.CursorAdapter;
 import android.widget.ListView;
-import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.zsxj.pda.R;
 import com.zsxj.pda.provider.ProviderContract.CashSaleGoods;
+import com.zsxj.pda.service.ScanService;
+import com.zsxj.pda.service.ScanService.LocalBinder;
 import com.zsxj.pda.util.ArithUtil;
 import com.zsxj.pda.util.ConstParams.Extras;
-import com.zsxj.pda.util.ConstParams.HandlerCases;
 import com.zsxj.pda.util.ConstParams.ScanType;
 import com.zsxj.pda.util.Globals;
 import com.zsxj.pda.util.Util;
-import com.zsxj.pda.wdt.CashSaleSpec;
 
-public class CashSaleGoodsListActivity extends ListActivity {
+public class CashSaleGoodsListActivity extends ActionBarActivity {
 	
 	private TextView mTotalTv;
 	private TextView mGoodsTotalTv;
-	private Spinner mPriceSp;
+	private ListView mGoodsListView;
+	private TextView mEmptyTextView;
 	
 	private Cursor mCursor = null;
 	
 	private double mNoDiscountTotal;
 	private double mDiscountTotal;
 	
-	
 	private String mBarcode;
-	
-	@SuppressLint("HandlerLeak")
-	private Handler mHandler = new Handler() {
-
-		@Override
-		public void handleMessage(Message msg) {
-			
-			switch (msg.what) {
-			case HandlerCases.SCAN_RESULT:
-				scanAndList();
-				break;
-			default:
-				break;
-			}
-		}
-	};
+	private ScanService mScanService = null;
+	private IntentFilter mScanIntentFilter = new IntentFilter(ScanService.SCAN_OVER_ACTION);
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.cash_sale_goods_list_activity);
 		
-//		final ActionBar actionBar = getActionBar();
-//        actionBar.setTitle(R.string.cash_sale);
-//		actionBar.setDisplayHomeAsUpEnabled(true);
-		
 		mTotalTv = (TextView) findViewById(R.id.total_tv);
 		mGoodsTotalTv = (TextView) findViewById(R.id.goods_total_tv);
-		mPriceSp = (Spinner) findViewById(R.id.price_sp);
-				
-		registerForContextMenu(getListView());
-	}
-	
-	@Override
-	protected void onListItemClick(ListView l, View v, int position, long id) {
-		mCursor.moveToPosition(position);
-			
-		int specId = mCursor.getInt(mCursor.getColumnIndex(
-			CashSaleGoods.COLUMN_NAME_SPEC_ID));
-		String specBarcode = mCursor.getString(mCursor.getColumnIndex(
-			CashSaleGoods.COLUMN_NAME_SPEC_BARCODE));
-		String goodsNum = mCursor.getString(mCursor.getColumnIndex(
-			CashSaleGoods.COLUMN_NAME_GOODS_NUM));
-		String goodsName = mCursor.getString(mCursor.getColumnIndex(
-			CashSaleGoods.COLUMN_NAME_GOODS_NAME));
-		String specCode = mCursor.getString(mCursor.getColumnIndex(
-			CashSaleGoods.COLUMN_NAME_SPEC_CODE));
-		String specName = mCursor.getString(mCursor.getColumnIndex(
-			CashSaleGoods.COLUMN_NAME_SPEC_NAME));
-		String countStr = mCursor.getString(mCursor.getColumnIndex(
-			CashSaleGoods.COLUMN_NAME_COUNT));
-		String retailPrice = mCursor.getString(mCursor.getColumnIndex(
-			CashSaleGoods.COLUMN_NAME_RETAILE_PRICE));
-		String wholesalePrice = mCursor.getString(mCursor.getColumnIndex(
-			CashSaleGoods.COLUMN_NAME_WHOLESALE_PRICE));
-		String memberPrice = mCursor.getString(mCursor.getColumnIndex(
-			CashSaleGoods.COLUMN_NAME_MEMBER_PRICE));
-		String purchasePrice = mCursor.getString(mCursor.getColumnIndex(
-			CashSaleGoods.COLUMN_NAME_PURCHASE_PRICE));
-		String price1 = mCursor.getString(mCursor.getColumnIndex(
-			CashSaleGoods.COLUMN_NAME_PRICE_1));
-		String price2 = mCursor.getString(mCursor.getColumnIndex(
-			CashSaleGoods.COLUMN_NAME_PRICE_2));
-		String price3 = mCursor.getString(mCursor.getColumnIndex(
-			CashSaleGoods.COLUMN_NAME_PRICE_3));
-		String discountStr = mCursor.getString(mCursor.getColumnIndex(
-			CashSaleGoods.COLUMN_NAME_DISCOUNT));
-		String stock = mCursor.getString(mCursor.getColumnIndex(CashSaleGoods.COLUMN_NAME_CASH_SALE_STOCK));
-		String barcode = mCursor.getString(mCursor.getColumnIndex(
-			CashSaleGoods.COLUMN_NAME_BARCODE));
+		mGoodsListView = (ListView) findViewById(R.id.goods_list);
+		mEmptyTextView = (TextView) findViewById(R.id.empty_text);
 		
-		Intent intent = new Intent(this,CashSaleGoodsActivity.class);
-		intent.putExtra(Extras.SPEC_ID, specId);
-		intent.putExtra(Extras.SPEC_BARCODE, specBarcode);
-		intent.putExtra(Extras.GOODS_NUM, goodsNum);
-		intent.putExtra(Extras.GOODS_NAME, goodsName);
-		intent.putExtra(Extras.SPEC_CODE, specCode);
-		intent.putExtra(Extras.SPEC_NAME, specName);
-		intent.putExtra(Extras.COUNT, countStr);
-		intent.putExtra(Extras.RETAIL_PRICE, retailPrice);
-		intent.putExtra(Extras.WHOLESALE_PRICE, wholesalePrice);
-		intent.putExtra(Extras.MEMBER_PRICE, memberPrice);
-		intent.putExtra(Extras.PURCHASE_PRICE, purchasePrice);
-		intent.putExtra(Extras.PRICE_1, price1);
-		intent.putExtra(Extras.PRICE_2, price2);
-		intent.putExtra(Extras.PRICE_3, price3);
-		intent.putExtra(Extras.DISCOUNT, discountStr);
-		intent.putExtra(Extras.CASH_SALE_STOCK, stock);
-		intent.putExtra(Extras.BARCODE, barcode);
-		startActivity(intent);
+		mGoodsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+			@Override
+			public void onItemClick(AdapterView<?> parent, View view,
+					int position, long id) {
+				mCursor.moveToPosition(position);
+				
+				int specId = mCursor.getInt(mCursor.getColumnIndex(
+					CashSaleGoods.COLUMN_NAME_SPEC_ID));
+				String specBarcode = mCursor.getString(mCursor.getColumnIndex(
+					CashSaleGoods.COLUMN_NAME_SPEC_BARCODE));
+				String goodsNum = mCursor.getString(mCursor.getColumnIndex(
+					CashSaleGoods.COLUMN_NAME_GOODS_NUM));
+				String goodsName = mCursor.getString(mCursor.getColumnIndex(
+					CashSaleGoods.COLUMN_NAME_GOODS_NAME));
+				String specCode = mCursor.getString(mCursor.getColumnIndex(
+					CashSaleGoods.COLUMN_NAME_SPEC_CODE));
+				String specName = mCursor.getString(mCursor.getColumnIndex(
+					CashSaleGoods.COLUMN_NAME_SPEC_NAME));
+				String countStr = mCursor.getString(mCursor.getColumnIndex(
+					CashSaleGoods.COLUMN_NAME_COUNT));
+				String retailPrice = mCursor.getString(mCursor.getColumnIndex(
+					CashSaleGoods.COLUMN_NAME_RETAILE_PRICE));
+				String wholesalePrice = mCursor.getString(mCursor.getColumnIndex(
+					CashSaleGoods.COLUMN_NAME_WHOLESALE_PRICE));
+				String memberPrice = mCursor.getString(mCursor.getColumnIndex(
+					CashSaleGoods.COLUMN_NAME_MEMBER_PRICE));
+				String purchasePrice = mCursor.getString(mCursor.getColumnIndex(
+					CashSaleGoods.COLUMN_NAME_PURCHASE_PRICE));
+				String price1 = mCursor.getString(mCursor.getColumnIndex(
+					CashSaleGoods.COLUMN_NAME_PRICE_1));
+				String price2 = mCursor.getString(mCursor.getColumnIndex(
+					CashSaleGoods.COLUMN_NAME_PRICE_2));
+				String price3 = mCursor.getString(mCursor.getColumnIndex(
+					CashSaleGoods.COLUMN_NAME_PRICE_3));
+				String discountStr = mCursor.getString(mCursor.getColumnIndex(
+					CashSaleGoods.COLUMN_NAME_DISCOUNT));
+				String stock = mCursor.getString(mCursor.getColumnIndex(CashSaleGoods.COLUMN_NAME_CASH_SALE_STOCK));
+				String barcode = mCursor.getString(mCursor.getColumnIndex(
+					CashSaleGoods.COLUMN_NAME_BARCODE));
+				
+				Intent intent = new Intent(CashSaleGoodsListActivity.this,CashSaleGoodsActivity.class);
+				intent.putExtra(Extras.SPEC_ID, specId);
+				intent.putExtra(Extras.SPEC_BARCODE, specBarcode);
+				intent.putExtra(Extras.GOODS_NUM, goodsNum);
+				intent.putExtra(Extras.GOODS_NAME, goodsName);
+				intent.putExtra(Extras.SPEC_CODE, specCode);
+				intent.putExtra(Extras.SPEC_NAME, specName);
+				intent.putExtra(Extras.COUNT, countStr);
+				intent.putExtra(Extras.RETAIL_PRICE, retailPrice);
+				intent.putExtra(Extras.WHOLESALE_PRICE, wholesalePrice);
+				intent.putExtra(Extras.MEMBER_PRICE, memberPrice);
+				intent.putExtra(Extras.PURCHASE_PRICE, purchasePrice);
+				intent.putExtra(Extras.PRICE_1, price1);
+				intent.putExtra(Extras.PRICE_2, price2);
+				intent.putExtra(Extras.PRICE_3, price3);
+				intent.putExtra(Extras.DISCOUNT, discountStr);
+				intent.putExtra(Extras.CASH_SALE_STOCK, stock);
+				intent.putExtra(Extras.BARCODE, barcode);
+				startActivity(intent);
+			}
+		});
+		mGoodsListView.setEmptyView(mEmptyTextView);
+		registerForContextMenu(mGoodsListView);
+		
+		Intent intent = new Intent(this, ScanService.class);
+		bindService(intent, mConnection, BIND_AUTO_CREATE);
 	}
 	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(
 			R.menu.cash_sale_list_menu, menu);
-		return true;
-	}
-	
-	@Override
-	public boolean onPrepareOptionsMenu(Menu menu) {
-//		mPriceSp = (Spinner) menu.findItem(R.id.price_sp_menu).getActionView();
-        Util.initSpinner(this, mPriceSp, R.layout.simple_spinner_dropdown_item_in_action_bar, 
-    		CashSaleSpec.getPrices());
-		mPriceSp.setSelection(Globals.getWhichPrice());
-		mPriceSp.setOnItemSelectedListener(new OnItemSelectedListener() {
-
-			@Override
-			public void onItemSelected(AdapterView<?> parent, View view,
-					int position, long id) {
-				Globals.setWhichPrice(position);
-				requery();
-				countInfo();
-			}
-
-			@Override
-			public void onNothingSelected(AdapterView<?> arg0) {
-			}
-		});
 		return true;
 	}
 	
@@ -213,6 +179,50 @@ public class CashSaleGoodsListActivity extends ListActivity {
 		}
 	}
 	
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		if (ScanService.KEY_F1 == keyCode && event.getRepeatCount() == 0 && mScanService != null) {
+			mScanService.triggerOn();
+			return true;
+		}
+		return super.onKeyDown(keyCode, event);
+	}
+	
+	@Override
+	public boolean onKeyUp(int keyCode, KeyEvent event) {
+		if (ScanService.KEY_F1 == keyCode && mScanService != null) {
+			mScanService.triggerOff();
+			return true;
+		}
+		return super.onKeyUp(keyCode, event);
+	}
+	
+	@Override
+	protected void onResume() {
+		super.onResume();	
+		requery();
+		countInfo();
+		LocalBroadcastManager.getInstance(this).registerReceiver(mBarcodeReceiver, mScanIntentFilter);
+	}
+	
+	@Override
+	protected void onPause() {
+		super.onPause();
+		LocalBroadcastManager.getInstance(this).unregisterReceiver(mBarcodeReceiver);
+	}
+	
+	@Override
+	protected void onStop() {
+		super.onStop();
+	}
+	
+	@Override
+	protected void onDestroy() {
+		unbindService(mConnection);
+		mCursor.close();
+		super.onDestroy();
+	}
+	
 	private void clearOrder() {
 		String selection = CashSaleGoods.COLUMN_NAME_WAREHOUSE_ID + "=?";
 		String[] selectionArgs = {
@@ -222,7 +232,7 @@ public class CashSaleGoodsListActivity extends ListActivity {
 			selection, selectionArgs);
 		requery();
 	}
-	
+
 	private void deleteItem(long id) {
 		getContentResolver().delete(
 			ContentUris.withAppendedId(CashSaleGoods.CONTENT_URI, id), 
@@ -235,98 +245,91 @@ public class CashSaleGoodsListActivity extends ListActivity {
 			mCursor.close();
 		mCursor = getContentResolver().query(CashSaleGoods.CONTENT_URI, 
 				null, selection, selectionArgs, null);
-		CursorAdapter adapter = new MyListAdapter(this, mCursor, 0);
-		setListAdapter(adapter);
+		CursorAdapter adapter = new MyListAdapter(this, mCursor);
+		mGoodsListView.setAdapter(adapter);
 		
 		countInfo();
 	}
-	
+
 	private void startSubmit() {
-		if (getListAdapter().getCount() == 0) {
+		if (mGoodsListView.getAdapter().getCount() == 0) {
 			Util.toast(getApplicationContext(), "没有可提交的条目");
 			return;
 		}
-		Intent intent = new Intent(this, CashSaleSumitActivity.class);
+		Intent intent = new Intent(this, CashSaleSubmitActivity.class);
 		intent.putExtra(Extras.NO_DISCOUNT_TOTAL, mNoDiscountTotal);
 		intent.putExtra(Extras.DISCOUNT_TOTAL, mDiscountTotal);
 		startActivity(intent);
 	}
-	
-	private void countInfo() {
-		mCursor.moveToPosition(-1);
-		int total = 0;
-		double noDiscountTotal = 0d;
-		double discountTotal = 0d;
-		while (mCursor.moveToNext()) {
-			String countStr = mCursor.getString(mCursor.getColumnIndex(
-				CashSaleGoods.COLUMN_NAME_COUNT));
-			int count = Integer.parseInt(countStr);
-			total += count;
-			String unitPriceStr = null;
-			switch (Globals.getWhichPrice()) {
-			case 0:
-				unitPriceStr = mCursor.getString(mCursor.getColumnIndex(
-					CashSaleGoods.COLUMN_NAME_RETAILE_PRICE));
-				break;
-			case 1:
-				unitPriceStr = mCursor.getString(mCursor.getColumnIndex(
-					CashSaleGoods.COLUMN_NAME_WHOLESALE_PRICE));
-				break;
-			case 2:
-				unitPriceStr = mCursor.getString(mCursor.getColumnIndex(
-					CashSaleGoods.COLUMN_NAME_MEMBER_PRICE));
-				break;
-			case 3:
-				unitPriceStr = mCursor.getString(mCursor.getColumnIndex(
-					CashSaleGoods.COLUMN_NAME_PURCHASE_PRICE));
-				break;
-			case 4:
-				unitPriceStr = mCursor.getString(mCursor.getColumnIndex(
-					CashSaleGoods.COLUMN_NAME_PRICE_1));
-				break;
-			case 5:
-				unitPriceStr = mCursor.getString(mCursor.getColumnIndex(
-					CashSaleGoods.COLUMN_NAME_PRICE_2));
-				break;
-			case 6:
-				unitPriceStr = mCursor.getString(mCursor.getColumnIndex(
-					CashSaleGoods.COLUMN_NAME_PRICE_3));
-				break;
-			default:
-				break;
-			}
-			String discountStr = mCursor.getString(mCursor.getColumnIndex(
-				CashSaleGoods.COLUMN_NAME_DISCOUNT));
-			double unitPrice = Double.parseDouble(unitPriceStr);
-			double discount = Double.parseDouble(discountStr);
-			
-//			double noDiscount = unitPrice * count;
-			double noDiscount = ArithUtil.mul(unitPrice, count);
-//			noDiscountTotal += noDiscount;
-			noDiscountTotal = ArithUtil.add(noDiscountTotal, noDiscount);
-//			double discountMoney = noDiscount * (1 - discount);
-			double antiDiscount = ArithUtil.sub(1, discount);
-			double discountMoney = ArithUtil.mul(noDiscount, antiDiscount);
-//			discountTotal += discountMoney;
-			discountTotal = ArithUtil.add(discountTotal, discountMoney);
-		}
-		mCursor.moveToPosition(-1);
-		
-		mTotalTv.setText(String.valueOf(total));
 
-		mNoDiscountTotal = noDiscountTotal;
-		mDiscountTotal = discountTotal;
-		double goodsTotal = noDiscountTotal - discountTotal;
-		mGoodsTotalTv.setText(String.format("%.2f 元", goodsTotal));
-	}
+	private void countInfo() {
+			mCursor.moveToPosition(-1);
+			int total = 0;
+			double noDiscountTotal = 0d;
+			double discountTotal = 0d;
+			while (mCursor.moveToNext()) {
+				String countStr = mCursor.getString(mCursor.getColumnIndex(
+					CashSaleGoods.COLUMN_NAME_COUNT));
+				int count = Integer.parseInt(countStr);
+				total += count;
+				String unitPriceStr = null;
+				switch (Globals.getWhichPrice()) {
+				case 0:
+					unitPriceStr = mCursor.getString(mCursor.getColumnIndex(
+						CashSaleGoods.COLUMN_NAME_RETAILE_PRICE));
+					break;
+				case 1:
+					unitPriceStr = mCursor.getString(mCursor.getColumnIndex(
+						CashSaleGoods.COLUMN_NAME_WHOLESALE_PRICE));
+					break;
+				case 2:
+					unitPriceStr = mCursor.getString(mCursor.getColumnIndex(
+						CashSaleGoods.COLUMN_NAME_MEMBER_PRICE));
+					break;
+				case 3:
+					unitPriceStr = mCursor.getString(mCursor.getColumnIndex(
+						CashSaleGoods.COLUMN_NAME_PURCHASE_PRICE));
+					break;
+				case 4:
+					unitPriceStr = mCursor.getString(mCursor.getColumnIndex(
+						CashSaleGoods.COLUMN_NAME_PRICE_1));
+					break;
+				case 5:
+					unitPriceStr = mCursor.getString(mCursor.getColumnIndex(
+						CashSaleGoods.COLUMN_NAME_PRICE_2));
+					break;
+				case 6:
+					unitPriceStr = mCursor.getString(mCursor.getColumnIndex(
+						CashSaleGoods.COLUMN_NAME_PRICE_3));
+					break;
+				default:
+					break;
+				}
+				String discountStr = mCursor.getString(mCursor.getColumnIndex(
+					CashSaleGoods.COLUMN_NAME_DISCOUNT));
+				double unitPrice = Double.parseDouble(unitPriceStr);
+				double discount = Double.parseDouble(discountStr);
+				
+	//			double noDiscount = unitPrice * count;
+				double noDiscount = ArithUtil.mul(unitPrice, count);
+	//			noDiscountTotal += noDiscount;
+				noDiscountTotal = ArithUtil.add(noDiscountTotal, noDiscount);
+	//			double discountMoney = noDiscount * (1 - discount);
+				double antiDiscount = ArithUtil.sub(1, discount);
+				double discountMoney = ArithUtil.mul(noDiscount, antiDiscount);
+	//			discountTotal += discountMoney;
+				discountTotal = ArithUtil.add(discountTotal, discountMoney);
+			}
+			mCursor.moveToPosition(-1);
+			
+			mTotalTv.setText(String.valueOf(total));
 	
-	@Override
-	protected void onResume() {
-		super.onResume();	
-		requery();
-		countInfo();
-	}
-	
+			mNoDiscountTotal = noDiscountTotal;
+			mDiscountTotal = discountTotal;
+			double goodsTotal = noDiscountTotal - discountTotal;
+			mGoodsTotalTv.setText(String.format("%.2f 元", goodsTotal));
+		}
+
 	private void requery() {
 		String selection = CashSaleGoods.COLUMN_NAME_WAREHOUSE_ID + "=?";
 		String[] selectionArgs = {
@@ -336,38 +339,10 @@ public class CashSaleGoodsListActivity extends ListActivity {
 			mCursor.close();
 		mCursor = getContentResolver().query(CashSaleGoods.CONTENT_URI, 
 				null, selection, selectionArgs, null);
-		CursorAdapter adapter = new MyListAdapter(this, mCursor, 0);
-		setListAdapter(adapter);
+		CursorAdapter adapter = new MyListAdapter(this, mCursor);
+		mGoodsListView.setAdapter(adapter);
 	}
-	
-	@Override
-	protected void onPause() {
-		super.onPause();
-	}
-	
-	@Override
-	public boolean onKeyDown(int keyCode, KeyEvent event) {
-		if (KeyEvent.KEYCODE_F2 == keyCode) {
-			return true;
-		} else if (KeyEvent.KEYCODE_BACK == keyCode) {
-			onBackPressed();
-		}
-		return false;
-	}
-	
-	public boolean onKeyUp(int keyCode, KeyEvent event) {
-		if (KeyEvent.KEYCODE_F2 == keyCode) {
-			return true;
-		}
-		return false;
-	}
-	
-	@Override
-	protected void onDestroy() {
-		super.onDestroy();
-		mCursor.close();
-	}
-	
+
 	private void scanAndList() {
 		Intent intent = new Intent(getApplicationContext(), 
 			ScanAndListActivity.class);
@@ -380,8 +355,8 @@ public class CashSaleGoodsListActivity extends ListActivity {
 		
 		private LayoutInflater mInflater;
 
-		@SuppressLint("NewApi") public MyListAdapter(Context context, Cursor c, int flags) {
-			super(context, c, flags);
+		public MyListAdapter(Context context, Cursor c) {
+			super(context, c, false);
 			mInflater = LayoutInflater.from(context);
 		}
 		
@@ -493,4 +468,28 @@ public class CashSaleGoodsListActivity extends ListActivity {
              return view;
 		}
 	}
+	
+	private ServiceConnection mConnection = new ServiceConnection() {
+		@Override
+		public void onServiceDisconnected(ComponentName name) {
+			mScanService = null;
+		}
+		
+		@Override
+		public void onServiceConnected(ComponentName name, IBinder service) {
+			LocalBinder  binder = (LocalBinder) service;
+			mScanService = binder.getService();
+		}
+	};
+	
+	private BroadcastReceiver mBarcodeReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			if (intent.getAction().equals(ScanService.SCAN_OVER_ACTION)) {
+				String barcode = intent.getStringExtra(ScanService.EXTRA_BARCODE);
+				mBarcode = barcode;
+				scanAndList();
+			}
+		}
+	};
 }

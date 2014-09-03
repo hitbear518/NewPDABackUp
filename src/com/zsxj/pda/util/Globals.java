@@ -3,6 +3,7 @@ package com.zsxj.pda.util;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import com.zsxj.pda.R;
 import com.zsxj.pda.util.ConstParams.PrefKeys;
 import com.zsxj.pda.wdt.Account;
 import com.zsxj.pda.wdt.Customer;
@@ -131,20 +132,26 @@ public class Globals {
 		return sCashSaleWarehouseNO;
 	}
 	
-	public static int[] getModules(String sellerNick) {
+	public static int[] getModules(Context context, String sellerNick) {
+		String duoduotest = context.getString(R.string.duoduotest);
+		String haoxu = context.getString(R.string.haoxu);
+		
 		if (sellerNick.equals("duoduoyun") || sellerNick.equals("yinpai") 
 				|| sellerNick.equals("jingu") || sellerNick.equals("hiblu")
 				|| sellerNick.equals("xiangshun")) {
 			return new int[] {
 				0, 1, 2, 3, 4, 99
 			};
-		} else if (sellerNick.equals("haoxu") || sellerNick.equals("qiqu") || sellerNick.equals("gdyx")) {
+		} else if (sellerNick.equals(haoxu) 
+				|| sellerNick.equals("qiqu") 
+				|| sellerNick.equals("gdyx")) {
 			return new int[] {
-				0, 1, 2, 3, 4, 5, 99
+				0, 1, 5, 99
 			};
-		} else if (sellerNick.equals("demo") || sellerNick.equals("duoduotest")) {
+		} else if (sellerNick.equals("demo") 
+				|| sellerNick.equals(duoduotest)) {
 			return new int[] {
-				0, 1, 2, 3, 4, 5, 99
+				0, 1, 5, 99
 			};
 		} else {
 			return new int[] {99};

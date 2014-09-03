@@ -6,36 +6,19 @@
 
     <uses-sdk
         android:minSdkVersion="10"
-        android:targetSdkVersion="18" />
+        android:targetSdkVersion="19" />
 
-    <uses-permission android:name="android.permission.FLASHLIGHT" />
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.WRITE_SMS" />
-    <uses-permission android:name="android.permission.READ_SMS" />
-    <uses-permission android:name="android.permission.RECEIVE_SMS" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.WRITE_OWNER_DATA" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
-    <uses-permission android:name="android.permission.RESTART_PACKAGES" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.INSTALL_PACKAGES" />
-    <uses-permission android:name="android.permission.VIBRATE" />
-    <uses-permission android:name="android.permission.SEND_SMS" />
-    <uses-permission android:name="android.permission.READ_CONTACTS" />
     <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT" />
-    <uses-permission android:name="com.android.launcher.permission.READ_SETTINGS" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.ACCESS_LOCATION_EXTRA_COMMANDS" />
-    <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS"/>
 
     <application
+        android:name=".MyApplication"
         android:allowBackup="true"
         android:icon="@drawable/logo"
-        android:name=".MyApplication"
         android:label="@string/app_name"
         android:theme="@style/Theme.AppCompat.Light.DarkActionBar" >
         <activity
@@ -151,13 +134,35 @@
             android:name="com.zsxj.pda.ui.client.PickGoodsActivity"
             android:screenOrientation="portrait" >
         </activity>
-        <activity android:name="com.zsxj.pda.ui.client.CashSaleSetActivity" >
+        <activity
+            android:name="com.zsxj.pda.ui.client.CashSaleSetActivity"
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait" >
         </activity>
-        <activity android:name="com.zsxj.pda.ui.client.CashSaleGoodsListActivity"></activity>
-        <activity android:name="com.zsxj.pda.ui.client.CashSaleGoodsActivity"></activity>
-        <activity android:name="com.zsxj.pda.ui.client.CashSaleSumitActivity"></activity>
-        <activity android:name="com.zsxj.pda.ui.client.SearchCustomerActivity"></activity>
-        <activity android:name="com.zsxj.pda.ui.client.AddressSelectActivity"></activity>
+        <activity
+            android:name="com.zsxj.pda.ui.client.CashSaleGoodsListActivity"
+            android:parentActivityName="com.zsxj.pda.ui.client.CashSaleSetActivity"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.zsxj.pda.ui.client.CashSaleSetActivity" />
+        </activity>
+        <activity
+            android:name="com.zsxj.pda.ui.client.CashSaleGoodsActivity"
+            android:screenOrientation="portrait" >
+        </activity>
+        <activity
+            android:name="com.zsxj.pda.ui.client.CashSaleSubmitActivity"
+            android:screenOrientation="portrait" >
+        </activity>
+        <activity
+            android:name="com.zsxj.pda.ui.client.SearchCustomerActivity"
+            android:screenOrientation="portrait" >
+        </activity>
+        <activity
+            android:name="com.zsxj.pda.ui.client.AddressSelectActivity"
+            android:screenOrientation="portrait" >
+        </activity>
 
         <provider
             android:name="com.zsxj.pda.provider.Provider"
@@ -173,8 +178,9 @@
             android:name="com.zsxj.pda.service.SyncPositionsService"
             android:exported="false" >
         </service>
-        <service android:name="com.zsxj.pda.service.ScanService"
-            android:exported="false">
+        <service
+            android:name="com.zsxj.pda.service.ScanService"
+            android:exported="false" >
         </service>
 
         <!-- Network listener -->
@@ -194,7 +200,6 @@
                 <action android:name="android.intent.action.DOWNLOAD_COMPLETE" />
             </intent-filter>
         </receiver>
-
     </application>
 
 </manifest>

@@ -1,7 +1,5 @@
 package com.zsxj.pda.ui.client;
 
-import android.app.ActionBar;
-import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -10,9 +8,12 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarActivity;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -25,22 +26,25 @@ import com.zsxj.pda.util.ConstParams.PrefKeys;
 import com.zsxj.pda.util.Globals;
 import com.zsxj.pda.util.Util;
 
-public class SyncDataActivity extends ListActivity {
+public class SyncDataActivity extends ActionBarActivity {
 	
 	private MyListAdapter mAdapter;
 	private int mWarehouseId;
 	private String[] mLabelText;
 	private String[] mValueText;
 	private ProgressDialog mProgressDialog;
+	private ListView mSyncDataSectionListView;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.sync_data_activity);
 		
-		final ActionBar actionBar = getActionBar();
+		final ActionBar actionBar = getSupportActionBar();
 		actionBar.setDisplayHomeAsUpEnabled(true);
 		actionBar.setTitle("数据同步");
+		
+		mSyncDataSectionListView = (ListView) findViewById(R.id.sync_data_section_list);
 		
 		mAdapter = new MyListAdapter();
 		SharedPreferences prefs = 
@@ -53,7 +57,14 @@ public class SyncDataActivity extends ListActivity {
 		mValueText = new String[] {
 				prefs.getString(PrefKeys.SYNC_POSITION_TIME, "初次同步")
 		};
-		setListAdapter(mAdapter);
+		mSyncDataSectionListView.setAdapter(mAdapter);
+		mSyncDataSectionListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+			@Override
+			public void onItemClick(AdapterView<?> parent, View view,
+					int position, long id) {
+				onSyncDataSectionListItemClick(position);
+			}
+		});
 		
 		mProgressDialog = new ProgressDialog(this);
 		mProgressDialog.setTitle("请等待同步完成");
@@ -66,9 +77,8 @@ public class SyncDataActivity extends ListActivity {
 		LocalBroadcastManager.getInstance(this)
 			.registerReceiver(new SyncReceiver(), intentFilter);
 	}
-	
-	@Override
-	protected void onListItemClick(ListView l, View v, int position, long id) {
+
+	private void onSyncDataSectionListItemClick(int position) {
 		switch (position) {
 		case 0:
 			Intent intent = new Intent(this, SyncPositionsService.class);
@@ -135,7 +145,7 @@ public class SyncDataActivity extends ListActivity {
 		public View getView(int position, View convertView, ViewGroup parent) {
 			ViewHolder holder;
 			if (null == convertView) {
-				convertView = getLayoutInflater().inflate(R.layout.lable_value_row, null);
+				convertView = getLayoutInflater().inflate(R.layout.lable_value_row, parent, false);
 				holder = new ViewHolder();
 				holder.labelTv = (TextView) convertView.findViewById(R.id.label_tv);
 				holder.valueTv = (TextView) convertView.findViewById(R.id.value_tv);

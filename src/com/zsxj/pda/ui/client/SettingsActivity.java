@@ -5,18 +5,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import android.app.ActionBar;
 import android.app.AlertDialog;
-import android.app.ListActivity;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarActivity;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
@@ -26,16 +29,27 @@ import com.zsxj.pda.util.ConstParams.Extras;
 import com.zsxj.pda.util.ConstParams.PrefKeys;
 import com.zsxj.pda.util.Globals;
 
-public class SettingsActivity extends ListActivity {
+public class SettingsActivity extends ActionBarActivity {
+	
+	private ListView mSettingListView;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.settings_activity);
-
-		final ActionBar actionBar = getActionBar();
+		
+		final ActionBar actionBar = getSupportActionBar();
 		actionBar.setDisplayHomeAsUpEnabled(true);
 		actionBar.setTitle(R.string.settings);
+		
+		mSettingListView = (ListView) findViewById(R.id.setting_list);
+		mSettingListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+			@Override
+			public void onItemClick(AdapterView<?> parent, View view,
+					int position, long id) {
+				onSettingListItemClick(position);
+			}
+		});
 	}
 	
 	@Override
@@ -69,11 +83,21 @@ public class SettingsActivity extends ListActivity {
 		map.put("label", getString(R.string.logout));
 		fillMaps.add(map);
 		SimpleAdapter adapter = new SimpleAdapter(this, fillMaps, R.layout.lable_value_row, from, to);
-		setListAdapter(adapter);
+		mSettingListView.setAdapter(adapter);
 	}
-	
+
 	@Override
-	protected void onListItemClick(ListView l, View v, int position, long id) {
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+		case android.R.id.home:
+			finish();
+			return true;
+		default:
+			return super.onOptionsItemSelected(item);
+		}
+	}
+
+	private void onSettingListItemClick(int position) {
 		switch (position) {
 		case 0:
 			Intent selectWarehouse = new Intent(this, SelectWarehouseActivity.class);
@@ -94,44 +118,17 @@ public class SettingsActivity extends ListActivity {
 		}
 	}
 	
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		switch (item.getItemId()) {
-		case android.R.id.home:
-			finish();
-			return true;
-		default:
-			return super.onOptionsItemSelected(item);
-		}
-	}
-	
 	private void promptLogout() {
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		LayoutInflater inflater = getLayoutInflater();
-		View view = inflater.inflate(R.layout.custom_alert_dialog_view, null);
-		TextView message = (TextView) view.findViewById(R.id.message);
-		message.setText(R.string.confirm_logout);
-		
-		builder.setView(view);
-		final AlertDialog dialog = builder.create();
-		
-		Button btn_positive = (Button) view.findViewById(R.id.btn_positive);
-		Button btn_negative = (Button) view.findViewById(R.id.btn_negative);
-		btn_positive.setOnClickListener(new OnClickListener() {
-			
-			@Override
-			public void onClick(View v) {
-				logout();
-			}
-		});
-		btn_negative.setOnClickListener(new OnClickListener() {
-			
-			@Override
-			public void onClick(View v) {
-				dialog.cancel();
-			}
-		});
-				dialog.show();
+		builder.setMessage(R.string.confirm_logout)
+			.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					logout();
+				}
+			})
+			.setNegativeButton(android.R.string.cancel, null)
+			.show();
 	}
 	
 	private void logout() {

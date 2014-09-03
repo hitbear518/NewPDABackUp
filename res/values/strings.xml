@@ -103,7 +103,7 @@
     <string name="fast_pd_success">快速盘点成功</string>
     <string name="fast_pd_fail">快速盘点失败</string>
     <string name="back">返回</string>
-    <string name="scan_goods_prompt">请按住右侧功能按钮扫描货品条码</string>
+    <string name="scan_goods_prompt">请按住F1键扫描货品条码</string>
     <string name="query_specs_failed">查询宝贝失败</string>
     <string name="query_no_result_promt">没有找到该宝贝</string>
     <!-- StockTransferActivity -->
@@ -179,7 +179,7 @@
     <string name="discount_2">（折扣）</string>
     <string name="multiply"> * </string>
     <string name="equals"> = </string>
-    <string name="no_entry_prompt">暂无货品记录，请按住右侧功能按钮扫描条码添加货品</string>
+    <string name="no_entry_prompt">暂无货品记录，请按住F1键扫描条码添加货品</string>
     <string name="delete">删除</string>
     <string name="total">总数：</string>
 

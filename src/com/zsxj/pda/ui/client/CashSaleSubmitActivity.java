@@ -17,8 +17,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.app.ActionBar;
-import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.database.Cursor;
@@ -27,6 +25,8 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarActivity;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -49,7 +49,7 @@ import com.zsxj.pda.util.Globals;
 import com.zsxj.pda.util.Util;
 import com.zsxj.pda.wdt.Customer;
 
-public class CashSaleSumitActivity extends Activity {
+public class CashSaleSubmitActivity extends ActionBarActivity {
 	
 	private TextView mNoDiscountTotalTv;
 	private TextView mDiscountTotalTv;
@@ -73,7 +73,7 @@ public class CashSaleSumitActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.cash_sale_submit_activity);
 		
-		final ActionBar actionBar = getActionBar();
+		final ActionBar actionBar = getSupportActionBar();
 		actionBar.setDisplayHomeAsUpEnabled(true);
 		actionBar.setTitle(R.string.cash_sale);
 		
