@@ -25,6 +25,7 @@ import com.zsxj.pda.ui.client.LoginActivity;
 import com.zsxj.pda.util.ConstParams.Events;
 import com.zsxj.pda.util.ConstParams.Extras;
 import com.zsxj.pda.util.ConstParams.PrefKeys;
+import com.zsxj.pda.util.Globals;
 import com.zsxj.pda.wdt.Account;
 import com.zsxj.pda.wdt.WDTException;
 import com.zsxj.pda.wdt.WDTLogin;
@@ -67,8 +68,11 @@ public class SocketService extends Service implements EventListener, LoginCallBa
 				e.printStackTrace();
 			}
 		}
-		remote_ip = ServicePool.getinstance().getConfig()
-				.getConfig(ConfigAccess.SOCKET_HOST);
+		remote_ip = Globals.getIp(this);
+		if (remote_ip == null) {
+			remote_ip = ServicePool.getinstance().getConfig()
+					.getConfig(ConfigAccess.SOCKET_HOST);	
+		}
 		String portStr = ServicePool.getinstance().getConfig()
 				.getConfig(ConfigAccess.SOCKET_HOST_PORT);
 		remote_port = Integer.parseInt(portStr);

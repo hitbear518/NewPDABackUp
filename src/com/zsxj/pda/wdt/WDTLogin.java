@@ -12,6 +12,7 @@ import com.zsxj.pda.service.SocketService;
 import com.zsxj.pda.service.config.ConfigAccess;
 import com.zsxj.pda.util.ConstParams.Events;
 import com.zsxj.pda.util.ConstParams.HandlerCases;
+import com.zsxj.pda.util.Globals;
 
 public class WDTLogin {
 	
@@ -53,12 +54,13 @@ public class WDTLogin {
 	public void login(Context ctx, String sellerNick, String userName, String password, LoginCallBack callBack) {
 		
 		// Test:duoduotest,admin,123456
-		Thread loginThread = new Thread(new LoginRunnable(sellerNick, userName, password, callBack));
+		Thread loginThread = new Thread(new LoginRunnable(ctx, sellerNick, userName, password, callBack));
 		loginThread.start();
 	}
 
 	public class LoginRunnable implements Runnable {
 		
+		private Context mContext;
 		private String mSellerNick;
 		private String mUserName;
 		private String mPassword;
@@ -69,7 +71,9 @@ public class WDTLogin {
 		int recvLen;
 		byte[] recvBuf = new byte[8192];
 		
-		public LoginRunnable(String sellerNick, String userName, String password, LoginCallBack callBack) {
+		public LoginRunnable(Context context, String sellerNick, String userName, 
+				String password, LoginCallBack callBack) {
+			mContext = context;
 			mSellerNick = sellerNick;
 			mUserName = userName;
 			mPassword = password;
@@ -90,10 +94,13 @@ public class WDTLogin {
 			try {						
 				// Init s_tdi
 				initTDI();
-				
 				// tdiProtSh1
-				String remote_ip = ServicePool.getinstance().getConfig()
-						.getConfig(ConfigAccess.SOCKET_HOST);
+				String remote_ip = Globals.getIp(mContext);
+				if (remote_ip == null) {
+					remote_ip = ServicePool.getinstance().getConfig()
+							.getConfig(ConfigAccess.SOCKET_HOST);
+				}
+						
 				byte[] bytes1 = tdiProtSh1(remote_ip);
 				if (null == bytes1) {
 					mCallBack.onLoginFail(HandlerCases.SHAKE_1_FAIL, null);

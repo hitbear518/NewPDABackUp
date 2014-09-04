@@ -5,4 +5,8 @@
     <string name="duoduotest">duoduotest</string>
     <string name="haoxu">haoxu</string>
     
+    <!-- IP Addresses -->
+    <string name="ip_duoduotest">121.199.38.85</string>
+    <string name="ip_haoxu">121.196.142.15</string>
+    
 </resources>

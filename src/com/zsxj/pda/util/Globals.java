@@ -13,12 +13,17 @@ public class Globals {
 	private static int sUserId;
 	private static String sSellerNick;
 	private static String sUserName;
+	
 	private static Account[] sAccounts;
+	
 	private static int sSupplierId = -1;
+	
 	private static int sWhichPrice = -1;
 	private static int sWhichWarehouse = -1;
 	private static int sWhichSupplier = -1;
+	
 	private static int sModuleUseWarehouseId = -1;
+	
 	private static String sCashSaleWarehouseNO = null;
 	private static int sWhichShop = -1;
 	private static String sShopName = null;
@@ -172,5 +177,16 @@ public class Globals {
 	
 	public static Customer getCustomer() {
 		return sCustomer;
+	}
+	
+	public static String getIp(Context context) {
+		String sellerNick = getSellerNick();
+		if (sellerNick == null) return null; 
+		if (sellerNick.equals(context.getString(R.string.duoduotest))) {
+			return context.getString(R.string.ip_duoduotest);
+		} else if (sellerNick.equals(context.getString(R.string.haoxu))) {
+			return context.getString(R.string.ip_haoxu);
+		}
+		return null;
 	}
 }

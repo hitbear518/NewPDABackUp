@@ -356,7 +356,7 @@ public class LoginActivity extends Activity implements EventListener, LoginCallB
 			mPasswordEdit.setText("123456");
 //			mSellerNickEdit.setText("haoxu");
 //			mUserNameEdit.setText("admin");
-//			mPasswordEdit.setText("123456");
+//			mPasswordEdit.setText("20140802");
 //			mSellerNickEdit.setText("yinpai");
 //			mUserNameEdit.setText("pda");
 //			mPasswordEdit.setText("1234");
@@ -516,7 +516,10 @@ public class LoginActivity extends Activity implements EventListener, LoginCallB
 				params.put("channelid", 	ca.getConfig(ConfigAccess.CHANNEL_ID));
 				params.put("softver", 		ca.getConfig(ConfigAccess.SOFTWARE_VERSION));
 				params.put("sysver", 		Util.getSysVer());
-				String ip = ca.getConfig(ConfigAccess.SOCKET_HOST);
+				String ip = Globals.getIp(this);
+				if (ip == null) {
+					ip = ca.getConfig(ConfigAccess.SOCKET_HOST);
+				}
 				String ipMd5 = getMd5(ip, "UTF-8");
 				params.put("ip_check", ipMd5);
 				requestParam = Util.getRequestParams(params);
