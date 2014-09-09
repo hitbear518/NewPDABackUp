@@ -351,10 +351,10 @@ public class LoginActivity extends Activity implements EventListener, LoginCallB
 //			mSellerNickEdit.setText("xiaobaxi");
 //			mUserNameEdit.setText("admin");
 //			mPasswordEdit.setText("xiaobaxi");
-			mSellerNickEdit.setText("duoduotest");
-			mUserNameEdit.setText("admin");
-			mPasswordEdit.setText("123456");
-//			mSellerNickEdit.setText("haoxu");
+//			mSellerNickEdit.setText("duoduotest");
+//			mUserNameEdit.setText("admin");
+//			mPasswordEdit.setText("123456");
+			mSellerNickEdit.setText("haoxu");
 //			mUserNameEdit.setText("admin");
 //			mPasswordEdit.setText("20140802");
 //			mSellerNickEdit.setText("yinpai");

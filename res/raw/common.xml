@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?><common>
 	<fileCacheDays>2</fileCacheDays>		<!-- days for file to be cached -->
-	<socketHost>121.199.38.85</socketHost>		<!-- default socket host ip -->
+	<socketHost>121.196.142.15</socketHost>		<!-- default socket host ip -->
 	<socketHostPort>30000</socketHostPort>		<!-- default socket host ip port -->
 	<listImageSuffix>_80x80.jpg</listImageSuffix>		<!-- taobao image pixel configure -->
 	<itemImageSuffix>_200x200.jpg</itemImageSuffix>

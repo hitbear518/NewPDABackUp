@@ -19,3 +19,4 @@ LOCAL_MODULE := serial_port
 LOCAL_SRC_FILES := libserial_port.so
 
 include $(PREBUILT_SHARED_LIBRARY)
+
